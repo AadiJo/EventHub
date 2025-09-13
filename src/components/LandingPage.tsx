@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Heart, Users, Calendar, Sparkles, ArrowRight, CheckCircle, Sun, Moon } from 'lucide-react';
+import { Heart, Users, Calendar, Sparkles, ArrowRight, Sun, Moon } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 
 const LandingPage: React.FC = () => {
@@ -48,13 +48,13 @@ const LandingPage: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16">
         <div className="text-center">
           <h1 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6">
-            Connect Through
+            Find Events That
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-secondary-600">
-              {' '}Events
+              {' '}Match Your Heart
             </span>
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-3xl mx-auto">
-            Discover and join events that match your interests. Create meaningful connections through shared experiences.
+            Discover meaningful events tailored to your interests. Our AI-powered matching connects you with communities that share your passions.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
@@ -81,7 +81,7 @@ const LandingPage: React.FC = () => {
             Why Choose EventHub?
           </h2>
           <p className="text-lg text-gray-600 dark:text-gray-300">
-            Simple, effective event discovery
+            Experience the future of event discovery
           </p>
         </div>
 
@@ -91,10 +91,10 @@ const LandingPage: React.FC = () => {
               <Sparkles className="h-8 w-8 text-primary-600 dark:text-primary-400" />
             </div>
             <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-              Smart Matching
+              AI-Powered Matching
             </h3>
             <p className="text-gray-600 dark:text-gray-300">
-              Our algorithm suggests events based on your interests and preferences for a personalized experience.
+              Our intelligent algorithm learns your preferences and suggests events that truly resonate with your interests.
             </p>
           </div>
 

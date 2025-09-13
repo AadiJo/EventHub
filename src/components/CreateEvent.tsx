@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { CreateEventData } from '../types/Event';
-import { Calendar, MapPin, Users, Clock, Tag, Save } from 'lucide-react';
+import { categorizeEvent, getCategorySuggestions } from '../utils/nlpCategorization';
+import { Calendar, MapPin, Users, Clock, Tag, Save, Sparkles } from 'lucide-react';
 
 const CreateEvent: React.FC = () => {
   const { user } = useAuth();
@@ -17,6 +18,8 @@ const CreateEvent: React.FC = () => {
   });
   const [newTag, setNewTag] = useState('');
   const [saved, setSaved] = useState(false);
+  const [categorySuggestions, setCategorySuggestions] = useState<string[]>([]);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState('');
 
   const categories = [
@@ -27,6 +30,31 @@ const CreateEvent: React.FC = () => {
     'Politics', 'Business', 'Networking', 'Volunteering', 'Charity',
     'Sports', 'Gaming', 'Books', 'Movies', 'Theater', 'Dance'
   ];
+
+  // Auto-categorize when title, description, or tags change
+  useEffect(() => {
+    if (formData.title || formData.description || formData.tags.length > 0) {
+      setIsAnalyzing(true);
+      
+      // Simulate a small delay to show the analyzing state
+      const timeoutId = setTimeout(() => {
+        const suggested = categorizeEvent(formData.title, formData.description, formData.tags);
+        const suggestions = getCategorySuggestions(formData.title, formData.description, formData.tags);
+        setCategorySuggestions(suggestions);
+        setIsAnalyzing(false);
+        
+        // Auto-set category if not already set or if user hasn't manually changed it
+        if (!formData.category && suggested) {
+          setFormData(prev => ({ ...prev, category: suggested }));
+        }
+      }, 1000);
+      
+      return () => clearTimeout(timeoutId);
+    } else {
+      setCategorySuggestions([]);
+      setIsAnalyzing(false);
+    }
+  }, [formData.title, formData.description, formData.tags, formData.category]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -83,6 +111,7 @@ const CreateEvent: React.FC = () => {
         maxAttendees: 10,
         tags: []
       });
+      setCategorySuggestions([]);
     }, 2000);
   };
 
@@ -158,6 +187,40 @@ const CreateEvent: React.FC = () => {
               <label htmlFor="category" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Category *
               </label>
+              
+              {/* AI Analysis Indicator */}
+              {isAnalyzing && (
+                <div className="mb-3 p-3 bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-lg">
+                  <div className="flex items-center">
+                    <Sparkles className="h-4 w-4 text-blue-600 dark:text-blue-400 mr-2 animate-pulse" />
+                    <span className="text-sm text-blue-700 dark:text-blue-300">AI Analyzing...</span>
+                  </div>
+                </div>
+              )}
+              
+              {/* AI Suggestions */}
+              {categorySuggestions.length > 0 && !isAnalyzing && (
+                <div className="mb-3">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">AI Suggestions:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {categorySuggestions.map((suggestion) => (
+                      <button
+                        key={suggestion}
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, category: suggestion }))}
+                        className={`px-3 py-1 rounded-full text-sm transition-colors ${
+                          formData.category === suggestion
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-blue-100 dark:hover:bg-blue-800'
+                        }`}
+                      >
+                        {suggestion}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
               <select
                 id="category"
                 name="category"

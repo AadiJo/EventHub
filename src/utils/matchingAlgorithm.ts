@@ -1,5 +1,6 @@
 import { Event } from '../types/Event';
 import { User } from '../contexts/AuthContext';
+import { getMLPreferenceWeights, recordInteraction } from './mlPreferenceLearning';
 
 // Mock events data - in a real app, this would come from an API
 const mockEvents: Event[] = [
@@ -155,37 +156,74 @@ const mockEvents: Event[] = [
   }
 ];
 
-// Simple matching algorithm based on user preferences
+// ML-Enhanced AI Matching Algorithm
 export const getMatchedEvents = (user: User): Event[] => {
   if (!user.preferences || user.preferences.length === 0) {
-    return mockEvents.slice(0, 5); // Return first 5 events if no preferences
+    return mockEvents.slice(0, 3); // Return first 3 events if no preferences
   }
 
+  // Get ML-enhanced preference weights
+  const mlWeights = getMLPreferenceWeights(user.id);
+  
   const scoredEvents = mockEvents.map(event => {
     let score = 0;
     
-    // Category matching
+    // ML-enhanced category matching (highest weight)
+    const categoryWeight = mlWeights[event.category] || 1.0;
     if (user.preferences.includes(event.category)) {
-      score += 10;
+      score += 10 * categoryWeight; // Apply ML weight multiplier
     }
     
-    // Tag matching
+    // ML-enhanced tag matching
     event.tags.forEach(tag => {
+      const tagWeight = mlWeights[tag] || 0.5;
       if (user.preferences.some(pref => 
         pref.toLowerCase().includes(tag.toLowerCase()) || 
         tag.toLowerCase().includes(pref.toLowerCase())
       )) {
-        score += 3;
+        score += 3 * tagWeight;
       }
     });
     
-    // Keyword matching in description
+    // Keyword matching in description with ML weights
     user.preferences.forEach(pref => {
+      const prefWeight = mlWeights[pref] || 1.0;
       if (event.description.toLowerCase().includes(pref.toLowerCase()) ||
           event.title.toLowerCase().includes(pref.toLowerCase())) {
-        score += 2;
+        score += 2 * prefWeight;
       }
     });
+    
+    // Enhanced special matching rules with ML weights
+    if (user.preferences.includes('Vegan') && 
+        (event.tags.includes('vegan') || event.title.toLowerCase().includes('vegan'))) {
+      score += 8 * (mlWeights['Vegan'] || 1.0);
+    }
+    
+    if (user.preferences.includes('Animal Rights') && 
+        (event.category === 'Animal Rights' || event.tags.includes('animals'))) {
+      score += 8 * (mlWeights['Animal Rights'] || 1.0);
+    }
+    
+    if (user.preferences.includes('Pride') && 
+        (event.tags.includes('pride') || event.tags.includes('lgbtq'))) {
+      score += 8 * (mlWeights['Pride'] || 1.0);
+    }
+    
+    if (user.preferences.includes('Hunting') && 
+        (event.tags.includes('hunting') || event.title.toLowerCase().includes('hunting'))) {
+      score += 8 * (mlWeights['Hunting'] || 1.0);
+    }
+    
+    if (user.preferences.includes('Environmental') && 
+        (event.category === 'Environmental' || event.tags.includes('environment'))) {
+      score += 8 * (mlWeights['Environmental'] || 1.0);
+    }
+    
+    // Boost score for newly discovered preferences
+    if (mlWeights[event.category] && mlWeights[event.category] > 1.5) {
+      score += 5; // Bonus for strong ML-learned preferences
+    }
     
     return { event, score };
   });
@@ -194,7 +232,7 @@ export const getMatchedEvents = (user: User): Event[] => {
   return scoredEvents
     .sort((a, b) => b.score - a.score)
     .filter(item => item.score > 0)
-    .slice(0, 6)
+    .slice(0, 8) // Show more events with ML enhancement
     .map(item => item.event);
 };
 
@@ -202,24 +240,53 @@ export const getAllEvents = (): Event[] => {
   return mockEvents;
 };
 
-// Function to join an event
+// Function to handle event interactions for ML learning
+export const handleEventInteraction = (
+  userId: string,
+  eventId: string,
+  action: 'join' | 'view' | 'skip' | 'leave'
+): void => {
+  const event = mockEvents.find(e => e.id === eventId);
+  if (!event) return;
+  
+  recordInteraction(userId, eventId, action, {
+    category: event.category,
+    tags: event.tags,
+    title: event.title,
+    description: event.description
+  });
+  
+  console.log(`ML Learning: User ${userId} ${action} event "${event.title}" (${event.category})`);
+};
+
+// Function to join an event and update ML preferences
 export const joinEvent = (userId: string, eventId: string): boolean => {
   const event = mockEvents.find(e => e.id === eventId);
   if (!event || event.currentAttendees >= event.maxAttendees) {
     return false;
   }
   
+  // Update event attendance
   event.currentAttendees += 1;
+  
+  // Record positive interaction for ML learning
+  handleEventInteraction(userId, eventId, 'join');
+  
   return true;
 };
 
-// Function to leave an event
+// Function to leave an event and update ML preferences
 export const leaveEvent = (userId: string, eventId: string): boolean => {
   const event = mockEvents.find(e => e.id === eventId);
   if (!event || event.currentAttendees <= 0) {
     return false;
   }
   
+  // Update event attendance
   event.currentAttendees -= 1;
+  
+  // Record negative interaction for ML learning
+  handleEventInteraction(userId, eventId, 'leave');
+  
   return true;
 };

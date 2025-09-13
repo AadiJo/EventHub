@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { getMatchedEvents, getAllEvents, joinEvent, leaveEvent } from '../utils/matchingAlgorithm';
+import { getMatchedEvents, getAllEvents, joinEvent, leaveEvent, handleEventInteraction } from '../utils/matchingAlgorithm';
 import { Event } from '../types/Event';
 import { Calendar, MapPin, Users, Clock, Heart, Filter, UserPlus, UserMinus } from 'lucide-react';
+import MLInsights from './MLInsights';
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
@@ -43,6 +44,8 @@ const Dashboard: React.FC = () => {
     
     if (success) {
       setJoinedEvents(prev => new Set(Array.from(prev).concat(eventId)));
+      // Record view interaction for ML learning
+      handleEventInteraction(user.id, eventId, 'view');
     }
     
     setRefreshing(false);
@@ -66,8 +69,9 @@ const Dashboard: React.FC = () => {
   };
 
   const handleViewEvent = (eventId: string) => {
-    // Simple view tracking - no ML learning
-    console.log(`User ${user.id} viewed event ${eventId}`);
+    if (!user) return;
+    // Record view interaction for ML learning
+    handleEventInteraction(user.id, eventId, 'view');
   };
 
   const EventCard: React.FC<{ event: Event }> = ({ event }) => {
@@ -176,6 +180,8 @@ const Dashboard: React.FC = () => {
             Discover events that match your interests
           </p>
         </div>
+
+        <MLInsights />
 
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center">
