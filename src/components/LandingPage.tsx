@@ -218,7 +218,7 @@ const LandingPage: React.FC = () => {
               <span className="text-xl font-bold text-white">Event Hub</span>
             </div>
             <p className="text-sm">
-              © 2024 Event Hub. Connecting hearts through meaningful events.
+              © Event Hub. Connecting hearts through meaningful events.
             </p>
           </div>
         </div>
